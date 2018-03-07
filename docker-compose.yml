@@ -1,0 +1,48 @@
+version: "3"
+
+services:
+
+  go-demo-db:
+    image: mongo
+    networks:
+      - go-demo
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+
+  go-demo:
+    image: vfarcic/go-demo
+    networks:
+      - go-demo
+      - proxy
+    depends_on:
+      - go-demo-db
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+
+  proxy:
+    image: vfarcic/docker-flow-proxy
+    ports:
+      - 80:80
+      - 443:443
+      - 8080:8080
+    networks:
+      - proxy
+    deploy:
+      mode: swarm
+      placement:
+        constraints: [node.role == manager]
+
+  jenkins:
+    image: jenkins:alpine
+    ports:
+      - 50000:50000
+    networks:
+      - proxy
+    volumes:
+      - ./docker/jenkins:/var/jenkins_home
+
+networks:
+  go-demo:
+  proxy:
